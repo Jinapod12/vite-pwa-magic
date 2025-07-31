@@ -4,9 +4,11 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { useToast } from '@/components/ui/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import { Send, Plus, MessageCircle, Bot, User } from 'lucide-react';
+
+// Flask API configuration
+const API_BASE_URL = 'http://localhost:5000';
 
 interface Message {
   id: string;
@@ -61,12 +63,19 @@ const ChatBot = () => {
     setChatState(prev => ({ ...prev, isLoading: true }));
     
     try {
-      const { data, error } = await supabase.functions.invoke('chat-handler', {
-        body: payload
+      const response = await fetch(`${API_BASE_URL}/chat-handler`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
       });
 
-      if (error) throw error;
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
 
+      const data = await response.json();
       console.log('API Response:', data);
       return data;
     } catch (error) {
